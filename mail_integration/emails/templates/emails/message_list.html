@@ -1,0 +1,67 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}
+    Message List
+{% endblock %}
+
+{% block body %}
+    <h2>Messages</h2>
+
+    <div id="progress-bar" style="width: 100%; height: 30px; background: #e0e0e0;">
+        <div id="progress-bar-inner" style="height: 100%; width: 0; background: #76c7c0;"></div>
+    </div>
+    <div id="progress-percentage">0%</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Subject</th>
+                <th>Sent Date</th>
+                <th>Body</th>
+            </tr>
+        </thead>
+        <tbody id="message-list">
+            {% for message in messages %}
+                <tr>
+                    <td>{{ message.subject }}</td>
+                    <td>{{ message.sent_date }}</td>
+                    <td>{{ message.body|truncatewords:20 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const socket = new WebSocket('ws://localhost:8001/ws/email-progress/');
+
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+
+            if (data.progress !== undefined) {
+                document.getElementById('progress-bar-inner').style.width = data.progress + '%';
+                document.getElementById('progress-percentage').innerText = data.progress + '%';
+            }
+
+            if (data.message !== undefined) {
+                const messageList = document.getElementById('message-list');
+                const newMessage = document.createElement('tr');
+                newMessage.innerHTML = `
+                    <td>${data.message.subject}</td>
+                    <td>${data.message.sent_date}</td>
+                    <td>${data.message.body.substring(0, 100)}...</td>
+                `;
+                messageList.appendChild(newMessage);
+            }
+        };
+
+        socket.onclose = function(event) {
+            console.log("WebSocket connection closed:", event);
+        };
+
+        socket.onerror = function(error) {
+            console.error("WebSocket Error: ", error);
+        };
+    });
+</script>

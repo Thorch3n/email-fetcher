@@ -1,0 +1,14 @@
+{% extends 'emails/base.html' %}
+
+{% block title %}
+    Email Login Form
+{% endblock %}
+
+{% block body %}
+    <h2>Enter Email Account</h2>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Login</button>
+    </form>
+{% endblock %}
